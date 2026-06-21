@@ -6,6 +6,8 @@ storm-research 是一个 **agent skill**，把"做一次有来源、可追溯的
 
 方法思想源自斯坦福 OVAL 实验室的 **STORM** 研究（见文末「来源与引用」），并在其基础上做了面向真实 agent 环境的工程化扩展：跨平台检索能力自动发现、检索韧性兜底、双引擎广度、过程可见性契约。
 
+![storm-research 的核心机制：围绕一个主题派出多个互相对立的视角去提问，每个问题都去真实检索，最后汇成一份带引用的答案](assets/fig-perspectives.png)
+
 ---
 
 ## 核心功能
@@ -20,6 +22,8 @@ storm-research 是一个 **agent skill**，把"做一次有来源、可追溯的
 - **👁️ 过程可见性契约** — Step 0-5 每步先甩紧凑 checkpoint 给用户（视角、问题、检索分工、矛盾图），不让多步 + 多子 agent 的研究退化成黑箱。
 - **🔍 自我同行评审** — 报告产出后自查强/弱论点、潜在偏见、缺失角度、各来源可靠性，并诚实标注边界。
 
+![左：主流 AI 报告给你一团平均化的灰色共识；右：多视角调研产出的是一张有冲突、有分歧的真实地图](assets/fig-compare.png)
+
 ---
 
 ## 安装
@@ -32,6 +36,8 @@ cp -R storm-research ~/.claude/skills/storm-research
 ```
 
 其他平台把目标目录换成对应位置（如 Codex `~/.codex/skills/`、OpenClaw `~/.openclaw/skills/`、Cursor `~/.cursor/skills/` 等）。
+
+![一个 skill 通吃各大平台，并自动扫描复用你已经装好的搜索工具，而不是逼你重装一套](assets/fig-platforms.png)
 
 > 前提：当前 agent 环境需具备至少一种联网/检索能力（内置搜索、检索类 skill、或可派发的检索子 agent）。若完全没有，skill 会在 Step 0 早失败并据实告知，不做无来源的"伪研究"。
 
