@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs / temp
+*.log
+tmp/
+.tmp/
+
+# Research output artifacts (生成的研究报告不入库；按需放到 examples/)
+output/
+*.draft.md
+
+# Node (若未来加工具脚本)
+node_modules/
