@@ -8,6 +8,17 @@
 
 > ⚠️ **核心纪律：靠回忆必然遗漏。必须实际遍历当前环境的真实工具/skill/agent 清单，逐项过筛——不是凭印象按类联想。**
 
+## 🚧 强制证据门槛（不出示证据 = 这步没做，不许往下走）
+
+这一步最大、最高频的失败，是 agent **跳过遍历、凭记忆只报 WebSearch/WebFetch 两三个工具**就声称探测完了。为杜绝它，本步骤设硬门槛：
+
+1. **必须先实际运行下面的遍历命令**（有 shell 时），把**原始输出贴出来**给用户看。先有原始输出，才能有清单。
+2. **没有贴出遍历命令的原始结果，就不算完成 Step 0**——不许直接给一张"我记得有哪些工具"的表。
+3. 列出的每一类检索资产，都要能在原始输出里找到对应行；凭记忆补充的，必须显式标注"（记忆，未经遍历确认）"。
+4. 若环境无 shell 无法运行命令，则改为**逐一列出当前会话真实挂载的工具全名**（不是举例几个），并对 skill/agent 如实标注"无法枚举，已尽力"。
+
+> 自检反问：**我是不是只写了 WebSearch / WebFetch？** 如果是，几乎可以肯定漏了——常用搜索类工具（google、brave、tavily、bing、perplexity、web-search 等）往往以 skill/MCP 形式并存，外加抓取/调研类一大批。遇到拿不准的工具名，简单搜一下确认它是不是搜索/抓取/调研用途。回去跑命令。
+
 ## 第一步：拉出真实全集（遍历，不是回忆）
 
 目标是发现**三类检索资产**，且因为 storm 本质是 research，发现优先级是 **搜索 ＞ 调研**（搜索类是核心，调研类是辅助；调研类内部再优先带联网搜索能力的）：
@@ -34,16 +45,25 @@
 **发现方法（核心：看描述，不是看目录名）**
 
 - **工具**：直接列出当前会话挂载的全部工具名，逐个看哪些是搜索/抓取/检索类（平台无关，这步最直接）。
-- **skill**：**别只列目录名**（目录名不告诉你能不能检索）。要读出每个 skill 的 `name`+`description`，**只在 description 字段里筛**搜索/调研关键词——全文 grep 会把正文随口提到 "web/research" 的无关 skill 全捞进来，噪声爆炸。参考做法（按平台换目录）：
+- **skill**：**别只列目录名**（目录名不告诉你能不能检索）。要读出每个 skill 的 `name`+`description`，**只在 description 字段里筛**搜索/调研关键词——全文 grep 会把正文随口提到 "web/research" 的无关 skill 全捞进来，噪声爆炸。**直接跑这条（跨平台一次扫全，按当前平台留目录即可）**：
   ```bash
-  for f in ~/.claude/skills/*/SKILL.md; do
+  for f in ~/.codex/skills/*/SKILL.md ~/.claude/skills/*/SKILL.md ~/.claude/plugins/*/skills/*/SKILL.md \
+           ~/.cursor/skills/*/SKILL.md ~/.gemini/skills/*/SKILL.md ~/.openclaw/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
     n=$(grep -m1 '^name:' "$f" | sed 's/name: *//')
     d=$(grep -m1 '^description:' "$f" | sed 's/description: *//')
     printf '%-26s %s\n' "$n" "$d"
-  done | grep -iE '搜索|检索|抓取|爬|联网|网页|调研|search|scrape|crawl|fetch|retriev|browse|research|url'
+  done 2>/dev/null | grep -iE '搜索|检索|抓取|爬|联网|网页|调研|资讯|search|scrape|crawl|fetch|retriev|browse|research|url|perplex' | sort -u
   ```
-  机器粗筛后**逐个用描述精判**。实测能精准捞出 `mywebsearch`、`perplexity-search`、`scrape`、`url-reader`/`baoyu-url-to-markdown`、`browse`、`youtube-transcript`、`paper-reader` 等。
-- **子 agent**：同理**读 `description` 和 `tools` 字段**，不是只列文件名。判定标准（平台无关）：**`tools` 含网络搜索/抓取（WebSearch/WebFetch 或等价物），或 `description` 提"调研/research/搜索"** → 纳入（实测 `content-researcher`、`research-analyst`、`trend-analyst` 都带 WebSearch+WebFetch）。内置工具撞墙时，派发这类 agent 往往是最强、最现成的检索路径。
+  **把这条命令的原始输出贴出来**，再逐个用描述精判。实测能精准捞出 `mywebsearch`、`perplexity-search`、`aihot`、`scrape`、`url-reader`/`baoyu-url-to-markdown`、`browse`、`agent-browser`、`youtube-transcript`、`paper-reader` 等——**这些就是凭记忆最常漏掉的**。
+- **子 agent**：同理**读 `description` 和 `tools` 字段**，不是只列文件名。判定标准（平台无关）：**`tools` 含网络搜索/抓取（WebSearch/WebFetch 或等价物），或 `description` 提"调研/research/搜索"** → 纳入（实测 `content-researcher`、`research-analyst`、`trend-analyst` 都带 WebSearch+WebFetch）。**跑这条扫一遍**：
+  ```bash
+  for f in ~/.claude/agents/*.md ~/.codex/skills/*/agents/*.md ~/.openclaw/agents/*.md; do
+    [ -f "$f" ] || continue
+    echo "── $(basename "$f")"; grep -iE '^name:|^description:|^tools:' "$f" | head -3
+  done 2>/dev/null
+  ```
+  内置工具撞墙时，派发这类 agent 往往是最强、最现成的检索路径。枚举不到子 agent 时，默认通用 agent（general-purpose / 等价物）可承担检索兜底。
 
 **收口**
 - 三类（工具 + skill + 子 agent）都遍历过才算完。某一类无法枚举，**如实标注"该类未完整遍历"**，不许假装查全；子 agent 实在枚举不到时，默认通用 agent（general-purpose / 等价物）可承担检索兜底。
