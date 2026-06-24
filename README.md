@@ -75,20 +75,18 @@ Step 0  检索能力探测（一次性）   自动扫描工具/skill/agent，列
 阶段一 · 知识采集（方法的灵魂）
   ├─ Step 1  视角发现           对立视角 + 覆盖视角
   ├─ Step 2  带视角提问 / 话题分解
-  ├─ Step 3  问题转搜索词 → 真实检索（多源并行 + 降级兜底）
-  ├─ Step 3.5 反思与补搜（agentic 闭环）  判断够不够，不够则诊断→调整→再搜
-  └─ Step 4  检索作答（抗幻觉，每句有据）
+  └─ Step 3  检索 · 反思 · 作答（agentic 闭环）  搜→判断够不够→不够则诊断·调整·再搜→带证据作答
   │
 阶段二 · 综合与组织
-  ├─ Step 5  矛盾图 / 缺口发现
-  └─ Step 6  两步法大纲 + 话题完整性核对
+  ├─ Step 4  矛盾图 / 缺口发现
+  └─ Step 5  两步法大纲（固定骨架：基础→机制→多视角→矛盾）
   │
-阶段三 · 写作与自查
-  ├─ Step 7  带引用写作
-  └─ Step 8  自我同行评审
+阶段三 · 写作与交付
+  ├─ Step 6  带引用写作（多视角层用「问题钩子 + 带源回答」）
+  └─ Step 7  自我同行评审
 ```
 
-每步的提示词内核在 [`prompts/`](prompts/) 下；方法论原理见 [`reference/methodology.md`](reference/methodology.md)。
+每步的提示词内核在 [`prompts/`](prompts/) 下；方法论原理见 [`reference/methodology.md`](reference/methodology.md)，agentic 反思补搜见 [`reference/agentic-retrieval.md`](reference/agentic-retrieval.md)。
 
 ---
 
@@ -99,6 +97,16 @@ Step 0  检索能力探测（一次性）   自动扫描工具/skill/agent，列
 3. **强制引用** — 正文内联 `[n]`，文末列真实 URL，全程可追溯。
 
 > **红线**：跳过检索，就不再是研究，而是让一个模型扮演几个角色自说自话——它们共享同一套盲区，会满怀自信地一起幻觉。宁可慢，不可省。
+
+---
+
+## Agentic 检索：不够时怎么办
+
+检索接地这根支柱真正难的地方，不在"搜一次"，而在**搜完之后判断证据够不够、不够时该怎么调整再搜**。这是 naive RAG 与 agentic search 的分界线。storm-research 把它做成一个闭环：对每个子问题「搜 → 判断够不够 → 不够则诊断 → 调整再搜」，最多 3 轮，到顶仍不够就诚实标注缺口、绝不脑补。
+
+![agentic 检索闭环：检索结果先判断够不够，够则通过；不够则诊断属于哪一类（跑题/太浅/冲突/信源弱/新缺口），据此选择对应调整（改写 query/换信源/调粒度/派生子问题）再搜，最多 3 轮，仍不够则标记缺口不脑补](assets/fig-agentic.png)
+
+核心纪律是：**「不够」不是一个布尔值，是一份诊断**。判定不够却把同一个 query 再搜一遍，等于空转烧 token——和漏搜一样是失败。所以反思必须输出"差在哪 + 做什么调整"，新 query 必须由缺口驱动而非重复原 query。原理与一手来源（Self-RAG / CRAG / FLARE / IRCoT / Adaptive-RAG）见 [`reference/agentic-retrieval.md`](reference/agentic-retrieval.md)。
 
 ---
 
